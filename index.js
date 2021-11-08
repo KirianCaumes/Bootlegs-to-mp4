@@ -1,22 +1,29 @@
-import fs, { createWriteStream } from 'fs'
-import ytdl from 'ytdl-core'
+import fs from 'fs'
 import axios from 'axios'
 import dotenv from 'dotenv'
+import download from './utils/download.js'
 
 dotenv.config()
 
-    ;
-(async () => {
-    const spreadsheet = {
-        id: '1pHhsfhiihyAzzSA8pwOimy4feq2_5BSIuLUS3F0NLC8',
-        range: "'In Flames'!A1:J300"
-    }
+const OUTPUT_FOLDER = 'outputs'
 
-    // Get data from Google Sheet
+const SPREADSHEET = {
+    id: '1pHhsfhiihyAzzSA8pwOimy4feq2_5BSIuLUS3F0NLC8',
+    range: "'In Flames'!A1:J300"
+}
+
+async function run() {
+    if (!fs.existsSync(OUTPUT_FOLDER))
+        fs.mkdirSync(OUTPUT_FOLDER, { recursive: true })
+
+    /**
+     * Get data from Google Sheet
+     * @type {{ title: string; date: string; city: string; country: string; setlist: string; proShot: string; video: string; full: string; link: string; setlistfm: string; comment: string; }[]}
+     */
     const rows = (await axios.get(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.id}/values/${spreadsheet.range}`, {
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET.id}/values/${SPREADSHEET.range}`, {
         params: {
-            key: process.env.SPREADSHEET_KEY
+            key: process.env.API_KEY
         }
     }))
         .data.values
@@ -47,47 +54,46 @@ dotenv.config()
              * Videos from Youtube API
              * @type {{id: string, title: string, description: string}[]} 
              */
-            const items = []
-
-            // Get all videos infos from playlist
-            if (url.href.includes('playlist')) {
-                (await axios.get(
+            const items = url.href.includes('playlist')
+                // Get all videos infos from playlist
+                ? (await axios.get(
                     'https://www.googleapis.com/youtube/v3/playlistItems', {
                     params: {
                         playlistId: url.searchParams.get('list'),
-                        key: process.env.YOUTUBE_KEY,
+                        key: process.env.API_KEY,
                         part: 'snippet',
                         maxResults: 30,
                     }
                 }))
                     .data.items
-                    .forEach(x => items.push({
+                    .map(x => ({
                         id: x?.snippet?.resourceId?.videoId,
                         title: x?.snippet?.title,
                         description: x?.snippet?.description,
                     }))
-            } else {
                 // Get video infos
-                (await axios.get(
+                : (await axios.get(
                     'https://www.googleapis.com/youtube/v3/videos', {
                     params: {
                         id: url.searchParams.get('v'),
-                        key: process.env.YOUTUBE_KEY,
+                        key: process.env.API_KEY,
                         part: 'snippet',
                     }
                 }))
                     .data.items
-                    .forEach(x => items.push({
+                    .map(x => ({
                         id: x?.id,
                         title: x?.snippet?.title,
                         description: x?.snippet?.description,
                     }))
-            }
+
+            if (!items[0])
+                continue
 
             const date = new Date(row.date.split('/').reverse().join('-'))
             const shortDate = date.toISOString()?.split('T')?.[0]
 
-            const path = `videos/[${shortDate}] ${row.title}`
+            const path = `${OUTPUT_FOLDER}/[${shortDate}] ${row.title.replace(/[\/|\\:*?"<>]/g, " ")?.trim()}`
 
             if (fs.existsSync(path))
                 continue
@@ -126,19 +132,27 @@ dotenv.config()
                 )
             } catch (error) { }
 
-            for (const item of items) {
-                await new Promise((resolve, reject) => {
-                    const stream = ytdl(`http://www.youtube.com/watch?v=${item.id}`, { filter: 'audioandvideo', quality: 'highest' })
-                    stream.pipe(createWriteStream(`${path}/${item.title}.mp4`))
-                    stream.on('end', resolve)
-                    stream.on('error', reject)
-                })
+            for (const [index, item] of items.entries()) {
+                await download(
+                    {
+                        id: item.id,
+                        path,
+                        filename: `${items?.length > 1 ? `${index + 1} - ` : ''}${item.title.replace(/[\/|\\:*?"<>]/g, " ")?.trim()}`,
+                    },
+                    process.env.COOKIE ? encodeURI(process.env.COOKIE) : undefined,
+                    process.env.USER_AGENT,
+                )
             }
 
             console.log(`[SUCCESS] ${row.title}`)
         } catch (error) {
             console.error(`[FAIL]: ${row.title}`)
+            console.error(error)
             continue
         }
     }
-})()
+
+    process.exit(0)
+}
+
+run()
