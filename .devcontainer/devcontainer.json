@@ -1,0 +1,16 @@
+{
+  "name": "bootlegs-to-mp4",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "bootlegs-to-mp4_container",
+  "workspaceFolder": "/app_bootlegs-to-mp4",
+  "extensions": [
+    "gruntfuggly.todo-tree",
+    "sibiraj-s.vscode-scss-formatter",
+    "firefox-devtools.vscode-firefox-debug",
+    "msjsdiag.debugger-for-chrome",
+    "davidanson.vscode-markdownlint",
+    "dbaeumer.vscode-eslint",
+    "stylelint.vscode-stylelint",
+    "pflannery.vscode-versionlens"
+  ]
+}

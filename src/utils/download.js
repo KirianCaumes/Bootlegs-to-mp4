@@ -39,7 +39,6 @@ export default async function download(options, cookie, userAgent, debug) {
             }
         }
     }
-    
+
     await (new MyDL(options, cookie, userAgent, debug)).fetch()
 }
-

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  bootlegs-to-mp4_container:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../:/app_bootlegs-to-mp4:rw
+    ports:
+      - 5000:5000
+      - 3000:3000
+    networks:
+      - bootlegs-to-mp4_network
+
+networks:
+  bootlegs-to-mp4_network:
+    driver: 'bridge'
