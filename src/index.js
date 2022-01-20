@@ -122,6 +122,9 @@ for (const row of rows)
             // eslint-disable-next-line no-continue
             continue
 
+        // eslint-disable-next-line no-console
+        console.log(`[PROCESSING] ${row.title}`)
+
         fs.mkdirSync(path, { recursive: true })
 
         fs.writeFileSync(
