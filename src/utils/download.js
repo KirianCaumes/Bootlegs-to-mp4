@@ -1,3 +1,4 @@
+// @ts-nocheck
 import ytcog from 'ytcog'
 
 /**
@@ -11,22 +12,17 @@ import ytcog from 'ytcog'
 export default async function download(options, cookie, userAgent, debug) {
     const MyDL = class extends ytcog.Download {
         async fetch() {
-            // @ts-ignore
             this.session.debugOn = this.debug
             await this.session.fetch()
             if (this.session.status === 'OK') {
                 this.video = new ytcog.Video(this.session, this.options)
-                // @ts-ignore
                 this.video.debugOn = this.debug
                 await this.video.fetch()
                 if (this.video.status === 'OK') {
-                    // @ts-ignore
                     this.video.debug(this.video.info())
                     await this.video.download()
                     if (this.video.downloaded) {
-                        // @ts-ignore
                         this.video.debug('\n\nDone!')
-                        // @ts-ignore
                         this.video.debug(`Downloaded: ${this.video.fn}`)
                     } else {
                         throw new Error(`Video status: ${this.video.status} (${this.video.reason})`)

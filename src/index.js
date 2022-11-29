@@ -6,15 +6,8 @@ import download from './utils/download'
 
 dotenv.config()
 
-const OUTPUT_FOLDER = 'outputs'
-
-const SPREADSHEET = {
-    id: '1pHhsfhiihyAzzSA8pwOimy4feq2_5BSIuLUS3F0NLC8',
-    range: "'In Flames'!A1:J300",
-}
-
-if (!fs.existsSync(OUTPUT_FOLDER))
-    fs.mkdirSync(OUTPUT_FOLDER, { recursive: true })
+if (!fs.existsSync(process.env.OUTPUT_FOLDER))
+    fs.mkdirSync(process.env.OUTPUT_FOLDER, { recursive: true })
 
 /**
  * Get data from Google Sheet
@@ -33,10 +26,10 @@ if (!fs.existsSync(OUTPUT_FOLDER))
  * }[]}
  */
 const rows = (await axios.get(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET.id}/values/${SPREADSHEET.range}`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SPREADSHEET_ID}/values/${process.env.GOOGLE_SPREADSHEET_RANGE}`,
     {
         params: {
-            key: process.env.API_KEY,
+            key: process.env.GOOGLE_API_KEY,
         },
     },
 ))
@@ -78,7 +71,7 @@ for (const row of rows)
                 {
                     params: {
                         playlistId: url.searchParams.get('list'),
-                        key: process.env.API_KEY,
+                        key: process.env.GOOGLE_API_KEY,
                         part: 'snippet',
                         maxResults: 30,
                     },
@@ -97,7 +90,7 @@ for (const row of rows)
                 {
                     params: {
                         id: url.searchParams.get('v'),
-                        key: process.env.API_KEY,
+                        key: process.env.GOOGLE_API_KEY,
                         part: 'snippet',
                     },
                 },
@@ -116,7 +109,7 @@ for (const row of rows)
         const date = new Date(row.date.split('/').reverse().join('-'))
         const shortDate = date.toISOString()?.split('T')?.[0]
 
-        const path = `${OUTPUT_FOLDER}/[${shortDate}] ${row.title.replace(/[/|\\:*?"<>]/g, ' ')?.trim()}`
+        const path = `${process.env.OUTPUT_FOLDER}/[${shortDate}] ${row.title.replace(/[/|\\:*?"<>]/g, ' ')?.trim()}`
 
         if (fs.existsSync(path))
             // eslint-disable-next-line no-continue
@@ -169,8 +162,8 @@ for (const row of rows)
                     path,
                     filename: `${items?.length > 1 ? `${index + 1} - ` : ''}${item.title.replace(/[/|\\:*?"<>]/g, ' ')?.trim()}`,
                 },
-                process.env.COOKIE ? encodeURI(process.env.COOKIE) : undefined,
-                process.env.USER_AGENT,
+                process.env.YOUTUBE_COOKIE ? encodeURI(process.env.YOUTUBE_COOKIE) : undefined,
+                process.env.YOUTUBE_USER_AGENT,
             )
 
         // eslint-disable-next-line no-console
@@ -179,7 +172,7 @@ for (const row of rows)
         // eslint-disable-next-line no-console
         console.error(`[FAIL]: ${row.title}`)
         // eslint-disable-next-line no-console
-        console.error(error)
+        console.error(/** @type {import('axios').AxiosError} */(error).message)
         // eslint-disable-next-line no-continue
         continue
     }
