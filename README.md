@@ -6,7 +6,7 @@ A simple script to download bootleg (youtube video) by a [Google sheet](https://
 
 Create and setup a `.env` according to the `.env.example` file.
 
-Install dependecies with:
+Install dependencies with:
 
 ```sh
 npm install
@@ -24,7 +24,7 @@ There is a [devcontainer](https://code.visualstudio.com/docs/devcontainers/conta
 
 Create and setup a `.env` according to the `.env.example` file.
 
-Install dependecies with:
+Install dependencies with:
 
 ```sh
 npm install
